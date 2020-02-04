@@ -37,7 +37,7 @@
   ```
 
 5. 加载人脸数据集
-  - 点击百度网盘地址：[人脸数据集](https://github.com/pdollar/coco)，下载数据文件. 
+  - 点击百度网盘地址：[人脸数据集](https://pan.baidu.com/s/1tx-OMRuN4SVJWpg83LYPNw)，下载数据文件. 
   - 解压该数据集，并将其中的VOCdevkit2007文件夹覆盖到data/VOCdevkit2007的位置. 
 
 6. 加载特征抽取模型
