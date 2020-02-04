@@ -1,0 +1,93 @@
+# mbuckler/tf-faster-rcnn-deps
+#
+# Dockerfile to hold dependencies for the Tensorflow implmentation
+# of Faster RCNN
+
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
+
+SHELL ["/bin/bash", "-c"]
+
+WORKDIR /home/zyb/myProject/face_recognition
+
+#RUN apt-get clean && cd /var/lib/apt && mv lists lists.old && mkdir -p lists/partial && apt-get clean
+#RUN apt-get update && apt-get install -y apt-transport-https
+#RUN echo 'deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64 /' > /etc/apt/sources.list.d/cuda.list
+
+# 更换镜像源，加速
+COPY ./configfile/sources.list /etc/apt/sources.list
+COPY ./configfile/Python-3.6.5.tgz ./configfile/Python-3.6.5.tgz
+
+# Get required packages
+RUN apt-get update -qq
+
+# Get required packages
+RUN apt-get install -y --no-install-recommends vim \
+                  libjpeg-dev \
+                  libfreetype6 \
+                  libfreetype6-dev \
+                  zlib1g-dev \
+                  cmake \
+                  wget \
+                  cython \
+                  git \
+                  openssl \
+                  libssl-dev \
+                  libsm6 \
+                  libglib2.0-dev \
+                  libxrender1 && \
+  python -V
+
+# Get required packages
+RUN cd configfile && tar xfz Python-3.6.5.tgz && cd Python-3.6.5 && \
+    ./configure --with-ssl && make && make install && \
+    rm /usr/bin/python && ln -s /usr/local/bin/python3 /usr/bin/python && python -V
+
+RUN /usr/local/bin/pip3 install pip -U -i https://mirrors.aliyun.com/pypi/simple && \
+    ln -s /usr/local/bin/pip3.6 /usr/bin/pip && pip -V && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
+
+# COPY pip安装包
+COPY ./configfile/requirements-gpu.txt ./configfile/requirements.txt
+
+# pip 安装
+RUN pip install -r ./configfile/requirements.txt
+
+# 补充
+RUN apt-get install libxext-dev -y
+
+# COPY整个工程到docker中
+COPY datasets/datasets.tar.gz ./datasets/datasets.tar.gz
+COPY tf-faster-rcnn.tar.gz ./tf-faster-rcnn.tar.gz
+
+# COPY命令到docker中
+COPY ./configfile/test.sh ./tf-faster-rcnn/tools/test.sh
+
+#配置环境变量
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib64
+ENV CUDA_HOME /usr/local/cuda
+ENV PYTHONPATH $PYTHONPATH:/root/coco/PythonAPI
+#设置工作目录
+WORKDIR /home/zyb/myProject/face_recognition/tf-faster-rcnn/tools
+
+#docker创建
+#sudo docker build -t zhangyanbo2007/face-detector-gpu:dev1 -f configfile/Dockerfile-gpu .
+
+#docker镜像存储
+sudo docker save zhangyanbo2007/face-detector-gpu:dev1  -o  ./images/face-detector-gpu.tar
+sudo chown -R zyb:zyb ./images/face-detector-gpu.tar
+
+#docker镜像分卷存储（2g）
+sudo split face-detector-gpu.tar -b 2G  -d -a 2 face-detector-gpu.tar
+
+
+#docker镜像解压
+sudo docker load -i ./images/face-detector-gpu.tar
+
+#docker镜像上传
+sudo docker push zhangyanbo2007/face-detector-gpu:dev1
+
+#docker镜像下载
+sudo docker pull zhangyanbo2007/face-detector-gpu:dev1
+
+#docker执行
+#sudo docker run -v /home/zyb/myProject/face_recognition/test_image:/home/zyb/myProject/face_recognition/tf-faster-rcnn/tools/test_image -it zhangyanbo2007/face-detector-gpu:dev1 sh -c "/bin/bash test.sh"

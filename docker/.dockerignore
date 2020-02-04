@@ -1,0 +1,9 @@
+#comment
+face-py-faster-rcnn*
+Faster-RCNN*
+tf-faster-rcnn*
+!tf-faster-rcnn.tar.gz
+datasets/VOCdevkit2007*
+datasets/imagenet_weights*
+datasets/VOCdevkit_face*
+log*

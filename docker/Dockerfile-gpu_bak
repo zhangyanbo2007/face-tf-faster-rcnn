@@ -1,0 +1,45 @@
+# mbuckler/tf-faster-rcnn-deps
+#
+# Dockerfile to hold dependencies for the Tensorflow implmentation
+# of Faster RCNN
+
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
+
+SHELL ["/bin/bash", "-c"]
+
+WORKDIR /home/zyb/myProject/face_recognition
+
+# 更换镜像源，加速
+COPY ./configfile/sources.list /etc/apt/sources.list
+COPY ./configfile/Python-3.6.5.tgz ./configfile/Python-3.6.5.tgz
+
+# Get required packages
+RUN apt-get update && apt-get install vim \
+                  libjpeg-dev \
+                  libfreetype6 \
+                  libfreetype6-dev \
+                  zlib1g-dev \
+                  cmake \
+                  wget \
+                  cython \
+                  git -y && \
+  python -V
+
+RUN apt-get install openssl libssl-dev
+
+# Get required packages
+RUN cd configfile && tar xfz Python-3.6.5.tgz && cd Python-3.6.5 && \
+    ./configure --with-ssl && make && make install && \
+    rm /usr/bin/python && ln -s /usr/local/bin/python3 /usr/bin/python && python -V
+
+RUN /usr/local/bin/pip3 install pip -U && ln -s /usr/local/bin/pip3.6 /usr/bin/pip && pip -V && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
+
+# COPY pip安装包
+COPY ./configfile/requirements-gpu.txt ./configfile/requirements.txt
+# COPY整个工程到docker中
+COPY tf-faster-rcnn.tar.gz ./tf-faster-rcnn.tar.gz
+COPY datasets/datasets.tar.gz ./datasets/datasets.tar.gz
+
+# pip 安装
+RUN pip install -r ./configfile/requirements.txt

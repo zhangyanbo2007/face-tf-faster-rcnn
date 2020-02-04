@@ -1,0 +1,27 @@
+# mbuckler/tf-faster-rcnn-deps
+#
+# Dockerfile to hold dependencies for the Tensorflow implmentation
+# of Faster RCNN
+
+FROM python:3.6-slim
+
+SHELL ["/bin/bash", "-c"]
+
+WORKDIR /home/zyb/myProject/face_recognition
+
+# 更换镜像源，加速
+#COPY ./configfile/sources.list /etc/apt/sources.list
+
+RUN pip3 install pip -U\
+&& pip -V\
+&& pip config set global.index-url https://mirrors.aliyun.com/pypi/simple\
+&& pip install pandas
+
+# COPY pip安装包
+COPY ./configfile/requirements.txt ./configfile/requirements.txt
+# COPY整个工程到docker中
+COPY tf-faster-rcnn.tar.gz ./tf-faster-rcnn.tar.gz
+COPY datasets/datasets.tar.gz ./datasets/datasets.tar.gz
+
+# pip 安装
+RUN pip install -r ./configfile/requirements.txt
